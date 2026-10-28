@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import Encabezado from '../components/Encabezado'
 import { Campo, MensajeError, claseBoton, claseInput } from '../components/formulario'
-import { ApiError, COMUNIDADES, registrar, type RegistroDatos, type Usuario } from '../services/api'
+import { ApiError, COMUNIDADES, registrar, type RegistroDatos, type Sesion } from '../services/api'
 
 interface Props {
-  onRegistro: (usuario: Usuario) => void
-  onIrALogin: () => void
+  onRegistro: (sesion: Sesion) => void
 }
 
 const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -29,7 +28,7 @@ function validar(d: RegistroDatos): string | null {
   return null
 }
 
-export default function Registro({ onRegistro, onIrALogin }: Props) {
+export default function Registro({ onRegistro }: Props) {
   const [datos, setDatos] = useState(datosIniciales)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -145,13 +144,6 @@ export default function Registro({ onRegistro, onIrALogin }: Props) {
             {enviando ? 'Creando cuenta…' : 'Crear cuenta'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-stone-600">
-          ¿Ya tienes cuenta?{' '}
-          <button type="button" onClick={onIrALogin} className="font-semibold text-bosque underline-offset-2 hover:underline">
-            Inicia sesión
-          </button>
-        </p>
       </main>
     </div>
   )

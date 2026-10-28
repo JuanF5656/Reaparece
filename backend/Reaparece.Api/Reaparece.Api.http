@@ -14,17 +14,17 @@ Content-Type: application/json
 
 ###
 
-POST {{Reaparece.Api_HostAddress}}/api/auth/login
+# Correo ya registrado → 409
+POST {{Reaparece.Api_HostAddress}}/api/auth/registro
 Content-Type: application/json
 
 {
+  "nombreCompleto": "Otro Jerónimo",
   "correo": "jeronimo@eia.edu.co",
-  "contrasena": "Reaparece123"
+  "contrasena": "contrasena123",
+  "confirmarContrasena": "contrasena123",
+  "comunidadPrincipal": "Metro de Medellín",
+  "aceptaHabeasData": true
 }
-
-###
-
-GET {{Reaparece.Api_HostAddress}}/api/usuarios/1/perfil
-Accept: application/json
 
 ###

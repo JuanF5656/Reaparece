@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-// Piezas de formulario compartidas por Login y Registro.
+// Piezas de formulario reutilizables entre pantallas.
 
 export const claseInput =
   'w-full rounded-xl border border-arena bg-white px-4 py-3 text-base outline-none transition focus:border-bosque focus:ring-2 focus:ring-bosque/20'

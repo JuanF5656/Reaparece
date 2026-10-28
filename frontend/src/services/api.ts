@@ -13,6 +13,12 @@ export interface Usuario {
   correo: string
 }
 
+export interface Sesion {
+  token: string
+  expiraEn: string
+  usuario: Usuario
+}
+
 export interface RegistroDatos {
   nombreCompleto: string
   correo: string
@@ -20,22 +26,6 @@ export interface RegistroDatos {
   confirmarContrasena: string
   comunidadPrincipal: string
   aceptaHabeasData: boolean
-}
-
-export interface Comunidad {
-  id: number
-  nombre: string
-  categoria: string
-  verificada: boolean
-  esPrincipal: boolean
-}
-
-export interface Perfil extends Usuario {
-  reputacion: number
-  objetosPublicados: number
-  objetosRecuperados: number
-  objetosReclamados: number
-  comunidades: Comunidad[]
 }
 
 export class ApiError extends Error {
@@ -66,16 +56,5 @@ async function solicitar<T>(ruta: string, init?: RequestInit): Promise<T> {
 }
 
 export function registrar(datos: RegistroDatos) {
-  return solicitar<Usuario>('/auth/registro', { method: 'POST', body: JSON.stringify(datos) })
-}
-
-export function iniciarSesion(correo: string, contrasena: string) {
-  return solicitar<Usuario>('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ correo, contrasena }),
-  })
-}
-
-export function obtenerPerfil(id: number) {
-  return solicitar<Perfil>(`/usuarios/${id}/perfil`)
+  return solicitar<Sesion>('/auth/registro', { method: 'POST', body: JSON.stringify(datos) })
 }

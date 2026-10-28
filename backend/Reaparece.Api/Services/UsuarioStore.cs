@@ -1,20 +1,17 @@
+using System.Security.Cryptography;
 using Reaparece.Api.Models;
 
 namespace Reaparece.Api.Services;
 
-public enum ResultadoLogin { Exitoso, CredencialesInvalidas, Bloqueado }
-
 /// <summary>
-/// Almacén de usuarios en memoria. Se registra como singleton y se reemplazará por PostgreSQL.
+/// Almacén de usuarios y sesiones en memoria. Se registra como singleton y se reemplazará por PostgreSQL.
 /// </summary>
 public class UsuarioStore
 {
-    public const int MaxIntentosFallidos = 3;
-    public static readonly TimeSpan DuracionBloqueo = TimeSpan.FromMinutes(15);
+    public static readonly TimeSpan DuracionSesion = TimeSpan.FromHours(2);
 
     private readonly List<Usuario> _usuarios = [];
-    // Los intentos se cuentan por correo aunque el correo no exista, para no revelar qué cuentas están registradas.
-    private readonly Dictionary<string, (int Fallidos, DateTime? BloqueadoHasta)> _intentos = [];
+    private readonly Dictionary<string, (int UsuarioId, DateTime ExpiraEn)> _sesiones = [];
     private readonly Lock _lock = new();
     private readonly TimeProvider _reloj;
     private int _siguienteId = 1;
@@ -23,12 +20,8 @@ public class UsuarioStore
     {
         _reloj = reloj;
 
-        var prueba = Crear("Jerónimo Tavera", "jeronimo@eia.edu.co", "Reaparece123", comunidadPrincipalId: 1);
-        prueba.ComunidadIds.Add(2);
-        prueba.Reputacion = 4.6;
-        prueba.ObjetosPublicados = 7;
-        prueba.ObjetosRecuperados = 4;
-        prueba.ObjetosReclamados = 3;
+        // Usuario de prueba, útil para comprobar que un correo repetido no se duplica.
+        Crear("Jerónimo Tavera", "jeronimo@eia.edu.co", "Reaparece123", comunidadPrincipalId: 1);
     }
 
     public static string NormalizarCorreo(string correo) => correo.Trim().ToLowerInvariant();
@@ -39,14 +32,6 @@ public class UsuarioStore
         lock (_lock)
         {
             return _usuarios.FirstOrDefault(u => u.Correo == normalizado);
-        }
-    }
-
-    public Usuario? BuscarPorId(int id)
-    {
-        lock (_lock)
-        {
-            return _usuarios.FirstOrDefault(u => u.Id == id);
         }
     }
 
@@ -62,35 +47,32 @@ public class UsuarioStore
         }
     }
 
-    public (ResultadoLogin Resultado, Usuario? Usuario, DateTime? BloqueadoHasta) ValidarCredenciales(string correo, string contrasena)
+    public (string Token, DateTime ExpiraEn) GenerarToken(Usuario usuario)
     {
-        var normalizado = NormalizarCorreo(correo);
-        var ahora = _reloj.GetUtcNow().UtcDateTime;
-
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        var expiraEn = _reloj.GetUtcNow().UtcDateTime + DuracionSesion;
         lock (_lock)
         {
-            _intentos.TryGetValue(normalizado, out var intento);
+            _sesiones[token] = (usuario.Id, expiraEn);
+        }
+        return (token, expiraEn);
+    }
 
-            if (intento.BloqueadoHasta is { } hasta)
+    /// <summary>Devuelve el usuario dueño del token, o null si no existe o ya expiró.</summary>
+    public Usuario? ValidarToken(string token)
+    {
+        lock (_lock)
+        {
+            if (!_sesiones.TryGetValue(token, out var sesion))
+                return null;
+
+            if (sesion.ExpiraEn <= _reloj.GetUtcNow().UtcDateTime)
             {
-                if (hasta > ahora)
-                    return (ResultadoLogin.Bloqueado, null, hasta);
-
-                // El bloqueo expiró: se empieza de cero.
-                intento = (0, null);
+                _sesiones.Remove(token);
+                return null;
             }
 
-            var usuario = _usuarios.FirstOrDefault(u => u.Correo == normalizado);
-            if (usuario is not null && BCrypt.Net.BCrypt.Verify(contrasena, usuario.ContrasenaHash))
-            {
-                _intentos.Remove(normalizado);
-                return (ResultadoLogin.Exitoso, usuario, null);
-            }
-
-            var fallidos = intento.Fallidos + 1;
-            DateTime? bloqueadoHasta = fallidos >= MaxIntentosFallidos ? ahora + DuracionBloqueo : null;
-            _intentos[normalizado] = (fallidos, bloqueadoHasta);
-            return (ResultadoLogin.CredencialesInvalidas, null, null);
+            return _usuarios.FirstOrDefault(u => u.Id == sesion.UsuarioId);
         }
     }
 
