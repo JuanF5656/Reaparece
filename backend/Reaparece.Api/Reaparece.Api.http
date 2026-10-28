@@ -1,6 +1,30 @@
 @Reaparece.Api_HostAddress = http://localhost:5062
 
-GET {{Reaparece.Api_HostAddress}}/weatherforecast/
+POST {{Reaparece.Api_HostAddress}}/api/auth/registro
+Content-Type: application/json
+
+{
+  "nombreCompleto": "Ana Gómez",
+  "correo": "ana@eia.edu.co",
+  "contrasena": "contrasena123",
+  "confirmarContrasena": "contrasena123",
+  "comunidadPrincipal": "Universidad EIA",
+  "aceptaHabeasData": true
+}
+
+###
+
+POST {{Reaparece.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "correo": "jeronimo@eia.edu.co",
+  "contrasena": "Reaparece123"
+}
+
+###
+
+GET {{Reaparece.Api_HostAddress}}/api/usuarios/1/perfil
 Accept: application/json
 
 ###

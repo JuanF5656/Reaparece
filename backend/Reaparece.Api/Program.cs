@@ -1,20 +1,30 @@
-var builder = WebApplication.CreateBuilder(args);
+using Reaparece.Api.Services;
 
-// Add services to the container.
+const string PoliticaFrontend = "Frontend";
+
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<UsuarioStore>();
+
+builder.Services.AddCors(options =>
+    options.AddPolicy(PoliticaFrontend, policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+app.UseCors(PoliticaFrontend);
 
 app.UseAuthorization();
 
