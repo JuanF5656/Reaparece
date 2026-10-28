@@ -1,0 +1,19 @@
+# C# / .NET
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# JavaScript / TypeScript / Node
+**/node_modules/
+**/dist/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
